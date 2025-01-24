@@ -1,0 +1,16 @@
+﻿<Window x:Class="HeroDisplay.HeroDetailsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Hero Details" Height="600" Width="800">
+    <DockPanel>
+        <!-- Back Button -->
+        <Button Name="BackButton" Content="Back" DockPanel.Dock="Top" Height="30" Click="BackButton_Click" Margin="5" />
+
+        <!-- Scrollable Hero Details -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Name="DetailsPanel" Margin="10">
+                <!-- Hero Details Added Dynamically -->
+            </StackPanel>
+        </ScrollViewer>
+        </DockPanel>
+</Window>
