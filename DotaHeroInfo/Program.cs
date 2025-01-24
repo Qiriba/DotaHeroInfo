@@ -1,100 +1,85 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using OpenCvSharp;
+using System;
+using System.Drawing;
 using System.IO;
-using Newtonsoft.Json.Linq;
 
 class Program
 {
-
-    public enum DamageType
+    static void Main()
     {
-        None = 0,      // No damage
-        Magical = 1,   // Magical damage
-        Physical = 2,  // Physical damage
-        Pure = 4       // Pure damage
-    }
+        Thread.Sleep(5000);
+        // Define the region where hero portraits are displayed (adjust for your screen)
+        Rectangle heroRegion = new Rectangle(208, 0, 1500, 74);  // Adjust this to your hero portrait area
 
-    static void Main(string[] args)
-    {
-        Console.WriteLine("tasdasd");
+        // Capture the screen region containing the hero portraits
+        Bitmap croppedImage = CaptureWindowRegion(heroRegion);
 
-        string filePath = "HeroData.json";
+        // Convert the cropped image to OpenCV Mat format
+        Mat mat = BitmapToMat(croppedImage);
 
-        // Load hero data from file
-        var heroData = LoadHeroDataFromFile(filePath);
+        // Define the path to your hero portraits folder
+        string heroImagesPath = @"C:\Users\Tobias\Pictures\Hero displays";  // Set the correct path to your hero images folder
 
-        if (heroData != null)
+        // Loop through each hero image in the folder and perform template matching
+        string[] heroFiles = Directory.GetFiles(heroImagesPath, "*.png");  // Change to .jpg or .bmp if needed
+
+        foreach (var heroFile in heroFiles)
         {
-            // Display all ability names
-            DisplayAllAbilityNames(heroData);
-        }
-    }
-
-    // Method to load hero data from a JSON file
-    static Dictionary<int, JObject> LoadHeroDataFromFile(string filePath)
-    {
-        try
-        {
-            if (File.Exists(filePath))
+            using (Mat heroImage = Cv2.ImRead(heroFile, ImreadModes.Color))
             {
-                string jsonContent = File.ReadAllText(filePath);
+                // Resize the hero image to match the icon size (68x41)
+                Mat resizedHeroImage = new Mat();
+                Cv2.Resize(heroImage, resizedHeroImage, new OpenCvSharp.Size(123, 70));
 
-                // Parse the JSON content to a dictionary of JObject
-                JObject parsedData = JObject.Parse(jsonContent);
-                var heroDataDictionary = new Dictionary<int, JObject>();
+                // Perform template matching to compare the current hero image with the screenshot
+                Mat result = new Mat();
+                Cv2.MatchTemplate(mat, resizedHeroImage, result, TemplateMatchModes.CCoeffNormed);
 
-                foreach (var item in parsedData)
+                // Find the best match position
+                double minVal, maxVal;
+                OpenCvSharp.Point minLoc, maxLoc;
+                Cv2.MinMaxLoc(result, out minVal, out maxVal, out minLoc, out maxLoc);
+
+                if (maxVal > 0.6)  // Threshold for a "good" match, adjust as needed
                 {
-                    int heroId = int.Parse(item.Key);
-                    JObject heroObject = (JObject)item.Value;
-                    heroDataDictionary[heroId] = heroObject;
+                    Console.WriteLine($"Matched Hero: {Path.GetFileNameWithoutExtension(heroFile)} with score: {maxVal}");
                 }
 
-                Console.WriteLine($"Successfully loaded hero data from {filePath}");
-                return heroDataDictionary;
-            }
-            else
-            {
-                Console.WriteLine($"File not found: {filePath}");
+                // Dispose of resized hero image to free resources
+                resizedHeroImage.Dispose();
             }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"An error occurred while loading hero data: {ex.Message}");
-        }
+        SaveScreenshotToFile(croppedImage, @"D:\test.png");
+        // Dispose of the cropped image
+        croppedImage.Dispose();
 
-        return null;
+        Console.WriteLine("Press any key to exit...");
+        Console.ReadKey();
     }
 
-    // Method to display all ability names for all heroes
-    static void DisplayAllAbilityNames(Dictionary<int, JObject> heroData)
+    // Capture only the required region from the screen
+    public static Bitmap CaptureWindowRegion(Rectangle region)
     {
-        foreach (var heroEntry in heroData)
+        Bitmap screenshot = new Bitmap(region.Width, region.Height);
+        using (Graphics g = Graphics.FromImage(screenshot))
         {
-            int heroId = heroEntry.Key;
-            JObject heroObject = heroEntry.Value;
+            g.CopyFromScreen(region.Left, region.Top, 0, 0, new System.Drawing.Size(region.Width, region.Height), CopyPixelOperation.SourceCopy);
+        }
+        return screenshot;
+    }
 
-            // Navigate to the "abilities" array in the JSON structure
-            var abilities = heroObject["result"]?["data"]?["heroes"]?[0]?["abilities"] as JArray;
-
-            if (abilities != null)
-            {
-                Console.WriteLine($"Hero ID: {heroId}");
-
-                foreach (var ability in abilities)
-                {
-                    string abilityName = ability["name_loc"]?.ToString() ?? "Unknown";
-                    string abilityDamage = ability["damage"]?.ToString() ?? "Unknown";
-                    Console.WriteLine($"  Ability: {abilityName}");
-                    Console.WriteLine($"  Damage: {abilityDamage}");
-                }
-
-                Console.WriteLine(new string('-', 50)); // Separator
-            }
-            else
-            {
-                Console.WriteLine($"No abilities found for Hero ID: {heroId}");
-            }
+    // Convert a Bitmap to Mat (OpenCV format)
+    public static Mat BitmapToMat(Bitmap bitmap)
+    {
+        using (var ms = new System.IO.MemoryStream())
+        {
+            bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+            return Cv2.ImDecode(ms.ToArray(), ImreadModes.Color);
         }
     }
+public static void SaveScreenshotToFile(Bitmap screenshot, string filePath)
+{
+    screenshot.Save(filePath, System.Drawing.Imaging.ImageFormat.Png);
+    Console.WriteLine($"Screenshot saved to {filePath}");
+}
 }

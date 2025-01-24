@@ -6,7 +6,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Newtonsoft.Json.Linq;
-
 namespace HeroDisplay
 {
     public partial class MainWindow : Window
@@ -22,6 +21,93 @@ namespace HeroDisplay
             LoadHeroData();
         }
 
+        private static void OnGameEvent(DotaGameEvent game_event)
+        {
+            if (game_event is ProviderUpdated provider)
+            {
+                Console.WriteLine($"Current Game version: {provider.New.Version}");
+                Console.WriteLine($"Current Game time stamp: {provider.New.TimeStamp}");
+            }
+            else if (game_event is PlayerDetailsChanged player_details)
+            {
+                Console.WriteLine($"Player Name: {player_details.New.Name}");
+                Console.WriteLine($"Player Account ID: {player_details.New.AccountID}");
+            }
+            else if (game_event is HeroDetailsChanged hero_details)
+            {
+                Console.WriteLine($"Player {hero_details.Player.Details.Name} Hero ID: " + hero_details.New.ID);
+                Console.WriteLine($"Player {hero_details.Player.Details.Name} Hero XP: " + hero_details.New.Experience);
+                Console.WriteLine($"Player {hero_details.Player.Details.Name} Hero has Aghanims Shard upgrade: " + hero_details.New.HasAghanimsShardUpgrade);
+                Console.WriteLine($"Player {hero_details.Player.Details.Name} Hero Health: " + hero_details.New.Health);
+                Console.WriteLine($"Player {hero_details.Player.Details.Name} Hero Mana: " + hero_details.New.Mana);
+                Console.WriteLine($"Player {hero_details.Player.Details.Name} Hero Location: " + hero_details.New.Location);
+            }
+            else if (game_event is AbilityUpdated ability)
+            {
+                Console.WriteLine($"Player {ability.Player.Details.Name} updated their ability: " + ability.New);
+            }
+            else if (game_event is TowerUpdated tower_updated)
+            {
+                if (tower_updated.New.Health < tower_updated.Previous.Health)
+                {
+                    Console.WriteLine($"{tower_updated.Team} {tower_updated.Location} tower is under attack! Health: " + tower_updated.New.Health);
+                }
+                else if (tower_updated.New.Health > tower_updated.Previous.Health)
+                {
+                    Console.WriteLine($"{tower_updated.Team} {tower_updated.Location} tower is being healed! Health: " + tower_updated.New.Health);
+                }
+            }
+            else if (game_event is TowerDestroyed tower_destroyed)
+            {
+                Console.WriteLine($"{tower_destroyed.Team} {tower_destroyed.Location} tower is destroyed!");
+            }
+            else if (game_event is RacksUpdated racks_updated)
+            {
+                if (racks_updated.New.Health < racks_updated.Previous.Health)
+                {
+                    Console.WriteLine($"{racks_updated.Team} {racks_updated.Location} {racks_updated.RacksType} racks are under attack! Health: " + racks_updated.New.Health);
+                }
+                else if (racks_updated.New.Health > racks_updated.Previous.Health)
+                {
+                    Console.WriteLine($"{racks_updated.Team} {racks_updated.Location} {racks_updated.RacksType} tower are being healed! Health: " + racks_updated.New.Health);
+                }
+            }
+            else if (game_event is RacksDestroyed racks_destroyed)
+            {
+                Console.WriteLine($"{racks_destroyed.Team} {racks_destroyed.Location} {racks_destroyed.RacksType} racks is destroyed!");
+            }
+            else if (game_event is AncientUpdated ancient_updated)
+            {
+                if (ancient_updated.New.Health < ancient_updated.Previous.Health)
+                {
+                    Console.WriteLine($"{ancient_updated.Team} ancient is under attack! Health: " + ancient_updated.New.Health);
+                }
+                else if (ancient_updated.New.Health > ancient_updated.Previous.Health)
+                {
+                    Console.WriteLine($"{ancient_updated.Team} ancient is being healed! Health: " + ancient_updated.New.Health);
+                }
+            }
+            else if (game_event is TeamNeutralItemsUpdated team_neutral_items_updated)
+            {
+                Console.WriteLine($"{team_neutral_items_updated.Team} neutral items updated: {team_neutral_items_updated.New}");
+            }
+            else if (game_event is CourierUpdated courier_updated)
+            {
+                Console.WriteLine($"Player {courier_updated.Player.Details.Name} courier updated: {courier_updated.New}");
+            }
+            else if (game_event is TeamDraftDetailsUpdated draft_details_updated)
+            {
+                Console.WriteLine($"{draft_details_updated.Team} draft details updated: {draft_details_updated.New}");
+            }
+            else if (game_event is TeamDefeat team_defeat)
+            {
+                Console.WriteLine($"{team_defeat.Team} lost the game.");
+            }
+            else if (game_event is TeamVictory team_victory)
+            {
+                Console.WriteLine($"{team_victory.Team} won the game!");
+            }
+        }
         private void LoadHeroData()
         {
             string jsonFilePath = "C:\\Users\\Tobias\\source\\repos\\DotaHeroInfo\\DotaHeroInfo\\bin\\Debug\\net8.0\\HeroData.json";

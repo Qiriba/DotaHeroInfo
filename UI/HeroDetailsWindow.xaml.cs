@@ -231,10 +231,6 @@ namespace HeroDisplay
                             if (hasDisable)
                             {
                                 disableCount++;
-                                if (isCore[counter])
-                                {
-                                    disableCount++; disableCount++; disableCount++; disableCount++;
-                                }
                             }
 
                             var abilityDetails = new TextBlock
@@ -272,7 +268,7 @@ namespace HeroDisplay
         {
             var diagnosticsHeader = new TextBlock
             {
-                Text = "Diagnostics Summary",
+                Text = "Diagnostics Summary Evaluation (Cores are 5x)",
                 FontSize = 14,
                 FontWeight = FontWeights.Bold,
                 Margin = new Thickness(5)
@@ -327,11 +323,18 @@ namespace HeroDisplay
                 Margin = new Thickness(10, 0, 0, 5),
                 Foreground = new SolidColorBrush(Colors.Gold)
             });
-            if(autoAttackMagicCount + magicDamageCount > autoAttackPhysicalCount + physicalDamageCount)
+
+
+            if(1.5 * autoAttackMagicCount + magicDamageCount > 1.5 * autoAttackPhysicalCount + physicalDamageCount)
             {
+                
 
             }
+            else if (1.5 * autoAttackMagicCount + magicDamageCount < 1.5 * autoAttackPhysicalCount + physicalDamageCount)
+            {
 
+
+            }
 
 
         }
